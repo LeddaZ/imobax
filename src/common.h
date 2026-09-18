@@ -23,5 +23,7 @@
 #define STRINGIFY(x) STRINGIFX(x)
 
 int mkdirat_recursive(int fd, const char *path, bool only_parent);
+int fd_getpath(int fd, char *buf, size_t buflen);
+int copy_file_fd(int fromfd, int tofd);
 
 #endif

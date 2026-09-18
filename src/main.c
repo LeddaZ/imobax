@@ -8,7 +8,6 @@
  * defined by the Mozilla Public License, v. 2.0.
 **/
 
-#include <copyfile.h>
 #include <fcntl.h>              // open, O_*
 #include <stdbool.h>
 #include <stdio.h>              // [as|f]printf, stderr, fputs
@@ -199,13 +198,13 @@ int main(int argc, const char **argv)
             {
                 goto out;
             }
-            tofd = openat(dstdir, topath, O_WRONLY | crflags);
+            tofd = openat(dstdir, topath, O_WRONLY | crflags, 0644);
             if(tofd == -1)
             {
                 ERRNO("open(%s)", topath);
                 goto out;
             }
-            if(fcopyfile(fromfd, tofd, NULL, COPYFILE_ALL) != 0)
+            if(copy_file_fd(fromfd, tofd) != 0)
             {
                 ERRNO("copyfile(%s)", topath);
                 goto out;

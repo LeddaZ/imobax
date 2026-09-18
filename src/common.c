@@ -15,6 +15,14 @@
 #include <unistd.h>             // faccessat, F_OK
 #include <sys/stat.h>           // mkdirat
 
+#ifdef __APPLE__
+#include <fcntl.h>              // fcntl, F_GETPATH
+#include <copyfile.h>           // fcopyfile, COPYFILE_ALL
+#else
+#include <stdio.h>              // snprintf
+#include <sys/sendfile.h>       // sendfile
+#endif
+
 #include "common.h"
 
 int mkdirat_recursive(int fd, const char *path, bool only_parent)
@@ -94,4 +102,49 @@ int mkdirat_recursive(int fd, const char *path, bool only_parent)
 out:;
     if(str) free(str);
     return retval;
+}
+
+int fd_getpath(int fd, char *buf, size_t buflen)
+{
+#ifdef __APPLE__
+    (void)buflen;
+    return fcntl(fd, F_GETPATH, buf);
+#else
+    char procpath[32];
+    snprintf(procpath, sizeof(procpath), "/proc/self/fd/%d", fd);
+    ssize_t n = readlink(procpath, buf, buflen - 1);
+    if(n == -1)
+    {
+        return -1;
+    }
+    buf[n] = '\0';
+    return 0;
+#endif
+}
+
+int copy_file_fd(int fromfd, int tofd)
+{
+#ifdef __APPLE__
+    return fcopyfile(fromfd, tofd, NULL, COPYFILE_ALL);
+#else
+    struct stat st;
+    if(fstat(fromfd, &st) != 0)
+    {
+        return -1;
+    }
+    off_t offset = 0,
+          remaining = st.st_size;
+    while(remaining > 0)
+    {
+        ssize_t n = sendfile(tofd, fromfd, &offset, remaining);
+        if(n < 0)
+        {
+            if(errno == EINTR) continue;
+            return -1;
+        }
+        if(n == 0) break;
+        remaining -= n;
+    }
+    return fchmod(tofd, st.st_mode & 07777);
+#endif
 }

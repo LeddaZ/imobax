@@ -18,7 +18,12 @@
 #include <sys/mman.h>           // mmap, munmap
 #include <sys/param.h>          // MAXPATHLEN
 #include <sys/stat.h>           // fstat
+#ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h> // CC_SHA1
+#else
+#include <openssl/sha.h>        // SHA1
+#define CC_SHA1(data, len, md) SHA1((const unsigned char*)(data), (len), (md))
+#endif
 
 #include "common.h"
 #include "db.h"
@@ -158,9 +163,9 @@ db_ent_t* db_getlist_sqlite3(int srcdir)
         ERRNO("open(" DBFILE_SQLITE ")");
         goto out;
     }
-    if(fcntl(fd, F_GETPATH, buf) != 0)
+    if(fd_getpath(fd, buf, sizeof(buf)) != 0)
     {
-        ERRNO("fcntl(" DBFILE_SQLITE ")");
+        ERRNO("fd_getpath(" DBFILE_SQLITE ")");
         goto out;
     }
     uri = db_make_uri(buf);
