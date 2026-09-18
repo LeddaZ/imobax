@@ -1,8 +1,11 @@
 # imobax
 
+Fork with Linux support added
+
 The **i**OS **Mo**bile **Ba**ckup **X**tractor.  
 It extracts backups... and stuff.
 
+Binary releases for Linux: [here](https://github.com/LeddaZ/imobax/releases). Works under WSL2 as well.
 Binary releases for macOS: [here](https://github.com/Siguza/imobax/releases).
 
 FYI: On macOS, iTunes places backups in `~/Library/Application Support/MobileSync/Backup`. ;)
